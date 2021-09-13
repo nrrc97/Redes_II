@@ -1,0 +1,150 @@
+from os import system, name
+import time
+import random
+
+def clear():
+    # Para Windows
+    if name == 'nt':
+        _ = system('cls')
+    # Para Mac y Linux
+    else:
+        _ = system('clear')
+############################### SERVIDOR ####################################
+def GenerarMapaBuscaMinas(n, k):
+    arr = [[0 for row in range(n)] for column in range(n)]
+    for num in range(k):
+        x = random.randint(0, n-1)
+        y = random.randint(0, n-1)
+        arr[y][x] = 'X'
+
+        if (x >= 0 and x <= n-2) and (y >= 0 and y <= n-1):
+            if arr[y][x+1] != 'X':
+                arr[y][x+1] += 1    #Centro derecho
+        if (x >= 1 and x <= n-1) and (y >= 0 and y <= n-1):
+            if arr[y][x-1] != 'X':
+                arr[y][x-1] += 1    #Centro izquierdo
+        if (x >= 1 and x <= n-1) and (y >= 1 and y <= n-1):
+            if arr[y-1][x-1] != 'X':
+                arr[y-1][x-1] += 1  #Superior izquierdo
+        if (x >= 0 and x <= n-2) and (y >= 1 and y <= n-1):
+            if arr[y-1][x+1] != 'X':
+                arr[y-1][x+1] += 1  #Superior derecho
+        if (x >= 0 and x <= n-1) and (y >= 1 and y <= n-1):
+            if arr[y-1][x] != 'X':
+                arr[y-1][x] += 1    #Superior centro
+        if (x >= 0 and x <= n-2) and (y >= 0 and y <= n-2):
+            if arr[y+1][x+1] != 'X':
+                arr[y+1][x+1] += 1  #Inferior derecho
+        if (x >= 1 and x <= n-1) and (y >= 0 and y <= n-2):
+            if arr[y+1][x-1] != 'X':
+                arr[y+1][x-1] += 1  #Inferior izquierdo
+        if (x >= 0 and x <= n-1) and (y >= 0 and y <= n-2):
+            if arr[y+1][x] != 'X':
+                arr[y+1][x] += 1    #Inferior centro
+    return arr
+############################### SERVIDOR ####################################
+def GenerarMapaJugador(n):
+    arr = [['-' for row in range(n)] for column in range(n)]
+    return arr
+################################ CLIENTE ####################################
+def MostrarMapa(map):
+    for row in map:
+        print(" ".join(str(cell) for cell in row))
+        print("")
+############################### SERVIDOR ####################################
+def CheckWon(map, k):
+    n_holes = 0
+    for row in map:
+        for cell in row:
+            if cell == '-':
+                n_holes += 1
+                if n_holes != k:
+                    return False
+    return True
+############################### SERVIDOR ####################################
+def UpdateMap(map1, map2, x, y):
+    if x == -1 and y == -1:
+        print("Valores incorrectos, intente de nuevo.")
+        MostrarMapa(map1)
+    else:
+        map1[y][x] = map2[y][x]
+        MostrarMapa(map1)
+############################### SERVIDOR ####################################
+def CheckContinuarJuego(puntos):
+    print("Tu puntuacion: ", puntos)
+    continuar = input("Deseas intentar de nuevo? (s/n) :")
+    if continuar == 'n':
+        return False
+    return True
+############################### SERVIDOR ####################################
+def CheckContinuarJuego2(puntos):
+    print("Tu puntuacion: ", puntos)
+    continuar = input("Deseas empezar nueva partida? (s/n) :")
+    if continuar == 'n':
+        return False
+    return True
+################################ CLIENTE ####################################
+def Juego():
+    StatusJuego = True
+    while StatusJuego:
+        clear()
+        dificultad = input("Selecciona la dificultad (f, d):")
+############################### SERVIDOR ####################################
+        if dificultad.lower() == 'd':
+            n = 16
+            k = 40
+        else:
+            n = 9
+            k = 10
+        clear()
+        buscaminas_mapa = GenerarMapaBuscaMinas(n, k)
+        mapa_jugador = GenerarMapaJugador(n)
+        puntos = 0
+################################ CLIENTE ####################################
+        MostrarMapa(mapa_jugador)
+        while True:
+            if CheckWon(mapa_jugador, k) == False:
+                print("Inserta coordenada para excavar: ")
+                if dificultad.lower() == 'd':
+                    x = input("X (1 a 16): ")
+                    if (int(x) < 1 or int(x) > n):
+                        x = 0
+                    y = input("Y (1 a 16): ")
+                    if (int(y) < 1 or int(y) > n):
+                        y = 0
+                    x = int(x) - 1
+                    y = int(y) - 1
+                    clear()
+                    ############################### SERVIDOR ####################################
+                    UpdateMap(mapa_jugador, buscaminas_mapa, x, y)
+                    puntos += 1
+                else:
+                    x = input("X (1 a 9): ")
+                    if (int(x) < 1 or int(x) > n):
+                        x = "0"
+                    y = input("Y (1 a 9): ")
+                    if (int(y) < 1 or int(y) > n):
+                        y = "0"
+                    x = int(x) - 1
+                    y = int(y) - 1
+                    clear()
+                    ############################### SERVIDOR ####################################
+                    UpdateMap(mapa_jugador, buscaminas_mapa, x, y)
+                    puntos += 1
+
+                if(buscaminas_mapa[y][x] == 'X'):
+################################ CLIENTE ####################################
+                    print("Fin del Juego!")
+                    MostrarMapa(buscaminas_mapa)
+                    StatusJuego = CheckContinuarJuego(puntos)
+                    break
+            else:
+                print("Bien hecho, ganaste!\n")
+                MostrarMapa(buscaminas_mapa)
+                StatusJuego = CheckContinuarJuego2(puntos)
+                break
+################################ CLIENTE ####################################
+try:
+    Juego()
+except KeyboardInterrupt:
+    print('\nFin del Juego.\nGracias por jugar!')
